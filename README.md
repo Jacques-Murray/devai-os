@@ -63,3 +63,23 @@ sudo apt-get install -y --no-install-recommends \
 
 curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
 uv sync --group dev
+
+## Local Build and Verification Commands
+
+- Run linters, type checks, and unit tests: `make check`
+- Build the bootable hybrid ISO into `artifacts/`: `make build-iso`
+- Boot the ISO in headless UEFI QEMU and verify all binaries, `flutter doctor`, Docker, and KVM: `make test-iso`
+- Split the ISO into 1900 MiB release chunks and generate `SHA256SUMS.txt`: `make package-release TAG=v1.0.0`
+- Remove staged artifacts and purge the `live-build` cache: `make clean`
+
+## Default Live Session Credentials
+
+- Username: `user`
+- Password: `live`
+
+## Reassembling a Split Release ISO
+
+```bash
+cat devai-os-v1.0.0.iso-part-* > devai-os-v1.0.0.iso
+sha256sum -c SHA256SUMS.txt --ignore-missing
+```
