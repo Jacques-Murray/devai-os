@@ -40,7 +40,7 @@ configure_live_build() {
         --mirror-binary "${MIRROR}" \
         --bootloaders "syslinux,grub-efi" \
         --bootappend-live "bool=live components nottyautologin console=tty0 console=ttyS0,115200" \
-        --debain-installer "live" \
+        --debian-installer "live" \
         --iso-application "${DISTRO_NAME}" \
         --iso-volume "${DISTRO_NAME}" \
         --apt-recommends true \
