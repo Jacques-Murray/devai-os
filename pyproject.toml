@@ -1,0 +1,52 @@
+[project]
+name = "devai-os-tooling"
+version = "0.1.0"
+description = "Build and automated QEMU verification tooling for DevAI-OS."
+requires-python = ">=3.13"
+
+[dependency-groups]
+dev = ["mypy>=1.14.0", "pytest>=8.3.0", "ruff>=0.9.0"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["scripts", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "PTH", # flake8-use-pathlib
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # allow long embedded shell strings
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["package_release", "test_iso_boot"]
+
+[tool.ruff.format]
+quote-style = "double"
+ident-style = "space"
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = ["scripts"]
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+pythonpath = ["scripts"]
+testpaths = ["tests"]
+addopts = "-ra -q --strict-markers"
