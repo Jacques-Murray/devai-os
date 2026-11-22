@@ -1,0 +1,14 @@
+task-gnome-desktop
+gnome-keyring
+libsecret-tools
+chromium
+curl
+wget
+git
+gh
+jq
+unzip
+xz-utils
+build-essential
+ca-certificates
+gnupg

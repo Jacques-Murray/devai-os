@@ -1,0 +1,9 @@
+docker-ce
+docker-ce-cli
+containerd.io
+docker-buildx-plugin
+docker-compose-plugin
+qemu-kvm
+libvirt-daemon-system
+libvirt-clients
+bridge-utils
