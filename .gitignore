@@ -1,0 +1,30 @@
+# Python & uv
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# live-build generated directories and images
+.build/
+auto/
+binary/
+cache/
+chroot/
+local/
+*.iso
+*.hybrid.iso
+*.img
+*.contents
+*.files
+*.packages
+*.zsync
+
+# CI & build outputs
+artifacts/
+release-assets/
+staging/
+release-notes.md
+config/archives/*.key.chroot
