@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+install_chatgpt_desktop() {
+    curl -fsSL "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb" -o /tmp/chatgpt.deb
+    apt-get install -y /tmp/chatgpt.deb
+    rm -f /tmp/chatgpt.deb
+}
+
+install_gemini_desktop_launcher() {
+    cat << 'EOF' > /usr/share/applications/gemini-desktop.desktop
+[Desktop Entry]
+Name=Google Gemini
+Comment=Google Gemini AI Workspace
+Exec=/usr/bin/chromium --app=https://gemini.google.com --class=GeminiDesktop
+Icon=web-browser
+Type=Application
+Categories=Development;Utility;
+StartupWMClass=GeminiDesktop
+EOF
+}
+
+install_chatgpt_desktop
+install_gemini_desktop_launcher

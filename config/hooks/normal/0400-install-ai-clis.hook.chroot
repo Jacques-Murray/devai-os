@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export FNM_DIR="/opt/fnm"
+export PATH="${FNM_DIR}:${PATH}"
+eval "$(fnm env)"
+
+install_antigravity_cli() {
+    curl -fsSL https://antigravity.google/cli/install.sh | bash
+    if [[ -f "${HOME}/.local/bin/agy" ]]; then
+        mv "${HOME}/.local/bin/agy" /usr/local/bin/agy
+        chmod 755 /usr/local/bin/agy
+    fi
+}
+
+install_node_ai_clis() {
+    npm install -g @anthropic-ai/claude-code @openai/codex
+}
+
+install_antigravity_cli
+install_node_ai_clis

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+systemctl enable docker.service
+systemctl enable libvirtd.service
+
+echo 'ADD_EXTRA_GROUPS=1' >> /etc/adduser.conf
+echo 'EXTRA_GROUPS="docker kvm libvirt plugdev"' >> /etc/adduser.conf
