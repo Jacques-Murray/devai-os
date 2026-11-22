@@ -1,0 +1,194 @@
+name: Build and Test DevAI-OS ISO
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Pre-Flight Linting, Type Checks, and Unit Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Lint shell scripts and chroot hooks
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends shellcheck
+          fi
+          shellcheck -x build.sh config/hooks/normal/*.hook.chroot
+
+      - name: Set up uv and Python 3.13
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Sync dev dependencies from pyproject.toml
+        run: |
+          uv sync --group dev
+
+      - name: Run Ruff lint and format checks
+        run: |
+          uv run ruff check scripts tests
+          uv run ruff format --check scripts tests
+
+      - name: Run Mypy strict static type checks
+        run: |
+          uv run mypy scripts tests
+
+      - name: Run unit tests
+        run: |
+          uv run pytest -v tests
+
+  build-and-boot-test:
+    name: Build Debian ISO and Verify QEMU Boot
+    needs: unit-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reclaim runner disk space for ISO build
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af || true
+          df -h
+
+      - name: Install live-build and QEMU dependencies
+        run: |
+          live-build \
+          debootstrap \
+          squashfs-tools \
+          xorriso \
+          isolinux \
+          syslinux-common \
+          grub-pc-bin \
+          grub-efi-amd64-bin \
+          mtools \
+          dosfstools \
+          qemu-system-x86 \
+          qemu-utils \
+          ovmf \
+          python3
+
+      - name: Make scripts executable
+        run: |
+          chmod +x build.sh
+          chmod +x scripts/test_iso_boot.py
+          chmod +x config/hooks/normal/*.hook.chroot
+
+      - name: Build live-build ISO image
+        run: |
+          sudo ./build.sh
+
+      - name: Stage built ISO artifact
+        id: stage_iso
+        run: |
+          mkdir -p artifacts
+          ISO_FILE=$(find . -maxdepth 1 -name "*.hybrid.iso" -o "*.iso" | head -n 1)
+          if [ -z "${ISO_FILE}" ]; then
+            echo "Error: No ISO file produced by live-build." >&2
+            exit 1
+          fi
+          VERSION_LABEL="${GITHUB_REF_NAME:-${GITHUB_SHA}}"
+          VERSION_LABEL="${VERSION_LABEL//\//-}"
+          TARGET_ISO="artifacts/devai-os-${VERSION_LABEL}.iso"
+          sudo mv "${ISO_FILE}" "${TARGET_ISO}"
+          sudo chown "$(id -u):$(id -g)" "${TARGET_ISO}"
+          echo "iso_path=${TARGET_ISO}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run automated QEMU UEFI boot and smoke test
+        run: |
+          KVM_FLAG=""
+          if [ ! -e /dev/kvm ]; then
+            KVM_FLAG="--allow-missing-kvm"
+          fi
+          python3 scripts/test_iso_boot.py \
+            --iso "${{ steps.stage_iso.outputs.iso_path }}" \
+            --log "artifacts/qemu-boot.log" \
+            --timeout 300 \
+            ${KVM_FLAG}
+
+      - name: Upload QEMU boot log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-boot-log-${{ github.sha }}
+          path: artifacts/qemu-boot.log
+          retention-days: 14
+
+      - name: Uplaod DevAI-OS ISO image
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devai-os-iso-${{ github.sha }}
+          path: ${{ steps.stage_iso.outputs.iso_path }}
+          retention-days: 7
+
+  publish-release:
+    name: Publish Split ISO to GitHub Releases
+    needs: build-and-boot-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reclaim runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+
+      - name: Download verified ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: devai-os-iso-${{ github.sha }}
+          path: staging
+
+      - name: Package split ISO and generate checksums
+        run: |
+          ISO_PATH=$(find staging -maxdepth 1 -name "*.iso" | head -n 1)
+          if [ -z "${ISO_PATH}" ]; then
+            echo "Error: Downloaded ISO not found in staging directory." > &2
+            exit 1
+          fi
+
+          python3 scripts/package_release.py \
+            --iso "${ISO_PATH}" \
+            --output-dir release-assets \
+            --tag "${GITHUB_REF_NAME}" \
+            --notes-out release-notes.md \
+            --chunk-mib 1900 \
+            --remove-source
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release-assets/* \
+            --title "DevAI-OS ${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            --verify-tag
