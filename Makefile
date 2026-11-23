@@ -10,7 +10,22 @@ NOTES_PATH ?= release-notes.md
 TIMEOUT ?= 300
 CHUNK_MIB ?= 1900
 
-.PHONY: help lint test check build-iso test-iso package-release clean
+EXTERNAL_URLS := \
+	https://packages.microsoft.com/keys/microsoft.asc \
+	https://download.docker.com/linux/debian/gpg \
+	https://download.docker.com/linux/debian/dists/trixie/Release \
+	https://packages.microsoft.com/debian/13/prod/dists/trixie/Release \
+	https://packages.microsoft.com/repos/code/dists/stable/Release \
+	https://astral.sh/uv/install.sh \
+	https://sh.rustup.rs \
+	https://fnm.vercel.app/install \
+	https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+	https://github.com/JetBrains/kotlin/releases/download/v2.1.20/kotlin-compiler-2.1.20.zip \
+	https://antigravity.google/download/linux/ide/latest.tar.gz \
+	https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.1.8/android-studio-2025.2.1.8-linux.tar.gz \
+	https://antigravity.google/cli/install.sh
+
+.PHONY: help lint check-urls test check build-iso test-iso package-release clean
 
 help: ## Show available targets and default variables
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -22,10 +37,21 @@ lint: ## Run shellcheck, ruff, and mypy strict checks
 	uv run ruff format --check scripts tests
 	uv run mypy scripts tests
 
+check-urls: ## Verify all external download URLs are reachable
+	@for url in $(EXTERNAL_URLS); do \
+		echo "Checking $$url"; \
+		if ! curl -fsSIL --max-time 15 -o /dev/null "$$url" 2>/dev/null; then \
+			if ! curl -fsSL -r 0-0 --max-time 15 -o /dev/null "$$url"; then \
+				echo "Error: URL unreachable or returned non-success status: $$url" >&2; \
+				exit 1; \
+			fi; \
+		fi; \
+	done
+
 test: ## Run pytest unit test suite
 	uv run pytest -v tests
 
-check: lint test ## Run all linters, type checks, and unit tests
+check: lint check-urls test ## Run linters, URL reachability checks, type checks, and unit tests
 
 build-iso: ## Build the Debian live-build ISO and stage it in artifacts/
 	chmod +x build.sh scripts/verify_iso_boot.py scripts/package_release.py config/hooks/normal/*.hook.chroot
