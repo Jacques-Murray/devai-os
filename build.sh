@@ -26,7 +26,7 @@ fetch_apt_keys() {
     curl -fsSL "https://download.docker.com/linux/debian/gpg" \
         -o "${ARCHIVES_DIR}/docker.key.chroot"
 
-    curl -fsSL "https://downloads.claude.ai/desktop/debian/gpg" \
+    curl -fsSL "https://downloads.claude.ai/desktop/debian/gpg.key" \
         -o "${ARCHIVES_DIR}/claude.key.chroot"
 }
 
