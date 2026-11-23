@@ -2,9 +2,24 @@
 set -euo pipefail
 
 install_chatgpt_desktop() {
-    curl -fsSL "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb" -o /tmp/chatgpt.deb
+    local url="https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb"
+    echo "Downloading ChatGPT Desktop from ${url}"
+    curl -fSL "${url}" -o /tmp/chatgpt.deb
     apt-get install -y /tmp/chatgpt.deb
     rm -f /tmp/chatgpt.deb
+}
+
+install_claude_desktop_launcher() {
+    cat << 'EOF' > /usr/share/applications/claude-desktop.desktop
+[Desktop Entry]
+Name=Claude
+Comment=Anthropic Claude AI Workspace
+Exec=/usr/bin/chromium --app=https://claude.ai --class=ClaudeDesktop
+Icon=web-browser
+Type=Application
+Categories=Development;Utility;
+StartupWMClass=ClaudeDesktop
+EOF
 }
 
 install_gemini_desktop_launcher() {
@@ -21,4 +36,5 @@ EOF
 }
 
 install_chatgpt_desktop
+install_claude_desktop_launcher
 install_gemini_desktop_launcher

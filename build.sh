@@ -15,19 +15,27 @@ require_root() {
     fi
 }
 
-fetch_apt_keys() {
-    # Download ASCII-armored GPG keys so live-build trusts third-party APT repos
-    mkdir -p "${ARCHIVES_DIR}"
+download_key() {
+    local url="$1"
+    local destination="$2"
 
-    curl -fsSL "https://packages.microsoft.com/keys/microsoft.asc" \
-        -o "${ARCHIVES_DIR}/microsoft.key.chroot"
+    echo "Fetching APT signing key: ${url}"
+    if ! curl -fSL "${url}" -o "${destination}"; then
+        echo "Error: Failed to download GPG key from ${url}" >&2
+        exit 1
+    fi
+}
+
+fetch_apt_keys() {
+    mkdir -p "${ARCHIVES_DIR}"
+    rm -f "${ARCHIVES_DIR}/claude.key.chroot"
+
+    download_key "https://packages.microsoft.com/keys/microsoft.asc" \
+        "${ARCHIVES_DIR}/microsoft.key.chroot"
     cp "${ARCHIVES_DIR}/microsoft.key.chroot" "${ARCHIVES_DIR}/vscode.key.chroot"
 
-    curl -fsSL "https://download.docker.com/linux/debian/gpg" \
-        -o "${ARCHIVES_DIR}/docker.key.chroot"
-
-    curl -fsSL "https://downloads.claude.ai/desktop/debian/gpg.key" \
-        -o "${ARCHIVES_DIR}/claude.key.chroot"
+    download_key "https://download.docker.com/linux/debian/gpg" \
+        "${ARCHIVES_DIR}/docker.key.chroot"
 }
 
 configure_live_build() {
@@ -39,7 +47,7 @@ configure_live_build() {
         --mirror-bootstrap "${MIRROR}" \
         --mirror-binary "${MIRROR}" \
         --bootloaders "syslinux,grub-efi" \
-        --bootappend-live "bool=live components nottyautologin console=tty0 console=ttyS0,115200" \
+        --bootappend-live "boot=live components nottyautologin console=tty0 console=ttyS0,115200" \
         --debian-installer "live" \
         --iso-application "${DISTRO_NAME}" \
         --iso-volume "${DISTRO_NAME}" \
