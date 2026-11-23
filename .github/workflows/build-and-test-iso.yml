@@ -34,31 +34,7 @@ jobs:
 
       - name: Verify external download URLs are reachable
         run: |
-          URLS=(
-            "https://packages.microsoft.com/keys/microsoft.asc"
-            "https://download.docker.com/linux/debian/gpg"
-            "https://download.docker.com/linux/debian/dists/trixie/Release"
-            "https://packages.microsoft.com/debian/13/prod/dists/trixie/Release"
-            "https://packages.microsoft.com/repos/code/dists/stable/Release"
-            "https://astral.sh/uv/install.sh"
-            "https://sh.rustup.rs"
-            "https://fnm.vercel.app/install"
-            "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-            "https://github.com/JetBrains/kotlin/releases/download/v2.1.20/kotlin-compiler-2.1.20.zip"
-            "https://antigravity.google/download/linux/ide/latest.tar.gz"
-            "https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.1.8/android-studio-2025.2.1.8-linux.tar.gz"
-            "https://antigravity.google/cli/install.sh"
-          )
-
-          for url in "${URLS[@]}"; do
-            echo "Checking ${url}"
-            if ! curl -fsSIL --max-time 15 -o /dev/null "${url}" 2>/dev/null; then
-              if ! curl -fsSL -r 0-0 --max-time 15 -o /dev/null "${url}"; then
-                echo "Error: URL unreachable or returned non-success status: ${url}" >&2
-                exit 1
-              fi
-            fi
-          done
+          make check-urls
 
       - name: Set up uv and Python 3.13
         uses: astral-sh/setup-uv@v5
