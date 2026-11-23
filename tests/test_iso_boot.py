@@ -47,7 +47,7 @@ class TestQemuCommandBuilder:
 
         with (
             patch.object(Path, "exists", return_value=True),
-            patch("verifyfy_iso_boot.os.access", return_value=True),
+            patch("verify_iso_boot.os.access", return_value=True),
         ):
             cmd = builder.build()
 
@@ -55,7 +55,7 @@ class TestQemuCommandBuilder:
         assert "-enable-kvm" in cmd
         assert "host" in cmd
         assert "qemu64" not in cmd
-        assert f"file={sample_config.iso_path}" in " ".join(cmd)
+        assert cmd[cmd.index("-cdrom") + 1] == str(sample_config.iso_path)
         assert f"if=pflash,format=raw,readonly=on,file={sample_config.ovmf_code_path}" in cmd
 
     def test_build_falls_back_to_qemu64_without_kvm_or_ovmf(

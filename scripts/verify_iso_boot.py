@@ -164,6 +164,10 @@ class SerialConsoleSession:
         self._stdin.write(payload)
         self._stdin.flush()
 
+    def clear_tail(self) -> None:
+        """Reset the underlying transcript rolling buffer before a new prompt."""
+        self._transcript.clear_tail()
+
     def wait_for_all(self, markers: tuple[str, ...], timeout_seconds: int) -> bool:
         """Read serial output until all target substrings appear or timeout expires."""
         deadline = time.monotonic() + timeout_seconds
