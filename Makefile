@@ -13,17 +13,17 @@ CHUNK_MIB ?= 1900
 EXTERNAL_URLS := \
 	https://packages.microsoft.com/keys/microsoft.asc \
 	https://download.docker.com/linux/debian/gpg \
+	https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg \
 	https://download.docker.com/linux/debian/dists/trixie/Release \
 	https://packages.microsoft.com/debian/13/prod/dists/trixie/Release \
 	https://packages.microsoft.com/repos/code/dists/stable/Release \
+	https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/dists/antigravity-debian/Release \
 	https://astral.sh/uv/install.sh \
 	https://sh.rustup.rs \
 	https://fnm.vercel.app/install \
 	https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
 	https://github.com/JetBrains/kotlin/releases/download/v2.1.20/kotlin-compiler-2.1.20.zip \
-	https://antigravity.google/download/linux/ide/latest.tar.gz \
-	https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.1.8/android-studio-2025.2.1.8-linux.tar.gz \
-	https://antigravity.google/cli/install.sh
+	https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.1.8/android-studio-2025.2.1.8-linux.tar.gz
 
 .PHONY: help lint check-urls test check build-iso test-iso package-release clean
 

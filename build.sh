@@ -36,6 +36,9 @@ fetch_apt_keys() {
 
     download_key "https://download.docker.com/linux/debian/gpg" \
         "${ARCHIVES_DIR}/docker.key.chroot"
+
+    download_key "https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg" \
+        "${ARCHIVES_DIR}/antigravity.key.chroot"
 }
 
 configure_live_build() {
