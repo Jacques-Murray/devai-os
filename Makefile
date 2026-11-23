@@ -12,6 +12,7 @@ CHUNK_MIB ?= 1900
 
 EXTERNAL_URLS := \
 	https://packages.microsoft.com/keys/microsoft.asc \
+	https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb \
 	https://download.docker.com/linux/debian/gpg \
 	https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg \
 	https://download.docker.com/linux/debian/dists/trixie/Release \
