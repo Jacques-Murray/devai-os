@@ -56,7 +56,10 @@ install_android_sdk() {
     rm -rf /tmp/cmdline-tools.zip /tmp/cmdline-extract
 
     local sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+    set +o pipefail
     yes | "${sdkmanager}" --sdk_root="${ANDROID_HOME}" --licenses >/dev/null
+    set -o pipefail
+
     "${sdkmanager}" --sdk_root="${ANDROID_HOME}" \
         "platform-tools" \
         "platforms;android-35" \
