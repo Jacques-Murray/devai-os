@@ -1,40 +1,43 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-install_chatgpt_desktop() {
-    local url="https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb"
-    echo "Downloading ChatGPT Desktop from ${url}"
-    curl -fSL "${url}" -o /tmp/chatgpt.deb
-    apt-get install -y /tmp/chatgpt.deb
-    rm -f /tmp/chatgpt.deb
-}
+install_webapp_launcher() {
+    local desktop_file="$1"
+    local app_name="$2"
+    local comment="$3"
+    local app_url="$4"
+    local wm_class="$5"
 
-install_claude_desktop_launcher() {
-    cat << 'EOF' > /usr/share/applications/claude-desktop.desktop
+    echo "Creating Chromium desktop launcher for ${app_name} (${app_url})"
+    cat << EOF > "${desktop_file}"
 [Desktop Entry]
-Name=Claude
-Comment=Anthropic Claude AI Workspace
-Exec=/usr/bin/chromium --app=https://claude.ai --class=ClaudeDesktop
+Name=${app_name}
+Comment=${comment}
+Exec=/usr/bin/chromium --app=${app_url} --class=${wm_class}
 Icon=web-browser
 Type=Application
 Categories=Development;Utility;
-StartupWMClass=ClaudeDesktop
+StartupWMClass=${wm_class}
 EOF
 }
 
-install_gemini_desktop_launcher() {
-    cat << 'EOF' > /usr/share/applications/gemini-desktop.desktop
-[Desktop Entry]
-Name=Google Gemini
-Comment=Google Gemini AI Workspace
-Exec=/usr/bin/chromium --app=https://gemini.google.com --class=GeminiDesktop
-Icon=web-browser
-Type=Application
-Categories=Development;Utility;
-StartupWMClass=GeminiDesktop
-EOF
-}
+install_webapp_launcher \
+    "/usr/share/applications/chatgpt-desktop.desktop" \
+    "ChatGPT" \
+    "OpenAI ChatGPT Workspace" \
+    "https://chatgpt.com" \
+    "ChatGPTDesktop"
 
-install_chatgpt_desktop
-install_claude_desktop_launcher
-install_gemini_desktop_launcher
+install_webapp_launcher \
+    "/usr/share/applications/claude-desktop.desktop" \
+    "Claude" \
+    "Anthropic Claude AI Workspace" \
+    "https://claude.ai" \
+    "ClaudeDesktop"
+
+install_webapp_launcher \
+    "/usr/share/applications/gemini-desktop.desktop" \
+    "Google Gemini" \
+    "Google Gemini AI Workspace" \
+    "https://gemini.google.com" \
+    "GeminiDesktop"

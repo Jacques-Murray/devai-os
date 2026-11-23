@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ANTIGRAVITY_IDE_URL="${ANTIGRAVITY_IDE_URL:-https://antigravity.google/download/linux/ide/latest.tar.gz}"
+ANDROID_STUDIO_URL="${ANDROID_STUDIO_URL:-https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.1.8/android-studio-2025.2.1.8-linux.tar.gz}"
+
+download_file() {
+    local url="$1"
+    local destination="$2"
+
+    echo "Downloading ${url} -> ${destination}"
+    if ! curl -fSL "${url}" -o "${destination}"; then
+        echo "Error: Failed to download ${url}" >&2
+        exit 1
+    fi
+}
+
 install_antigravity_ide() {
     mkdir -p /opt/antigravity-ide
-    curl -fsSL "https://antigravity.google/download/linux/ide/latest.tar.gz" -o /tmp/antigravity-ide.tar.gz
+    download_file "${ANTIGRAVITY_IDE_URL}" "/tmp/antigravity-ide.tar.gz"
     tar -xzf /tmp/antigravity-ide.tar.gz -C /opt/antigravity-ide --strip-components=1
     ln -sf /opt/antigravity-ide/antigravity-ide /usr/local/bin/antigravity-ide
     rm -f /tmp/antigravity-ide.tar.gz
@@ -20,8 +34,7 @@ EOF
 }
 
 install_android_studio() {
-    STUDIO_URL="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.1.8/android-studio-2025.2.1.8-linux.tar.gz"
-    curl -fsSL "${STUDIO_URL}" -o /tmp/android-studio.tar.gz
+    download_file "${ANDROID_STUDIO_URL}" "/tmp/android-studio.tar.gz"
     tar -xzf /tmp/android-studio.tar.gz -C /opt
     ln -sf /opt/android-studio/bin/studio /usr/local/bin/android-studio
     rm -f /tmp/android-studio.tar.gz

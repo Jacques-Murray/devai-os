@@ -8,41 +8,56 @@ export FLUTTER_ROOT="/opt/flutter"
 export ANDROID_HOME="/opt/android-sdk"
 export ANDROID_SDK_ROOT="${ANDROID_HOME}"
 
+download_file() {
+    local url="$1"
+    local destination="$2"
+
+    echo "Downloading ${url} -> ${destination}"
+    if ! curl -fSL "${url}" -o "${destination}"; then
+        echo "Error: Failed to download ${url}" >&2
+        exit 1
+    fi
+}
+
 install_uv() {
-    # Install uv system-wide for Python environment and package management
-    curl -LsSf https://astal.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
+    local url="https://astral.sh/uv/install.sh"
+    echo "Running installer from ${url}"
+    curl -fSL "${url}" | env UV_INSTALL_DIR="/usr/local/bin" sh
 }
 
 install_rust() {
-    # Install Rust toolchain into shared /opt directories
+    local url="https://sh.rustup.rs"
     mkdir -p "${CARGO_HOME}" "${RUSTUP_HOME}"
-    curl --proto '=https' --tlsv1.2 -sSf https://sh/rustup.rs | sh -s -- -y --no-modify-path
+    echo "Running installer from ${url}"
+    curl --proto '=https' --tlsv1.2 -fSL "${url}" | sh -s -- -y --no-modify-path
 }
 
 install_nodejs_and_devcontainers() {
-    # Install Fast Node Manager, LTS Node.js, and the Dev Containers CLI
+    local url="https://fnm.vercel.app/install"
     mkdir -p "${FNM_DIR}"
-    curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir "${FNM_DIR}" --skip-shell
+    echo "Running installer from ${url}"
+    curl -fSL "${url}" | bash -s -- --install-dir "${FNM_DIR}" --skip-shell
+
     export PATH="${FNM_DIR}:${PATH}"
     eval "$("${FNM_DIR}/fnm" env)"
-    fnm install --lts
-    fnm default lts-latest
+    "${FNM_DIR}/fnm" install --lts
+    "${FNM_DIR}/fnm" default lts-latest
     npm install -g @devcontainers/cli
 }
 
 install_android_sdk() {
-    # Install Android command-line tools, platform-tools, build-tools, and accept licenses
-    CMDLINE_TOOLS_ZIP="commandlinetools-linux-11076708_latest.zip"
-    CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/${CMDLINE_TOOLS_ZIP}"
+    local cmdline_zip="commandlinetools-linux-11076708_latest.zip"
+    local url="https://dl.google.com/android/repository/${cmdline_zip}"
 
     mkdir -p "${ANDROID_HOME}/cmdline-tools"
-    curl -fsSL "${CMDLINE_TOOLS_URL}" -o /tmp/cmdline-tools.zip
-    unzip -q /tmp/cmdline-extract/cmdline-tools "${ANDROID_HOME}/cmdline-tools/latest"
+    download_file "${url}" "/tmp/cmdline-tools.zip"
+    unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-extract
+    mv /tmp/cmdline-extract/cmdline-tools "${ANDROID_HOME}/cmdline-tools/latest"
     rm -rf /tmp/cmdline-tools.zip /tmp/cmdline-extract
 
-    SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
-    yes | "${SDKMANAGER}" --sdk_root="${ANDROID_HOME}" --licenses >/dev/null
-    "${SDKMANAGER}" --sdk_root="${ANDROID_HOME}" \
+    local sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+    yes | "${sdkmanager}" --sdk_root="${ANDROID_HOME}" --licenses >/dev/null
+    "${sdkmanager}" --sdk_root="${ANDROID_HOME}" \
         "platform-tools" \
         "platforms;android-35" \
         "build-tools;35.0.0"
@@ -51,18 +66,18 @@ install_android_sdk() {
 }
 
 install_flutter_and_kotlin() {
-    # Clone Flutter SDK into /opt/flutter and allow system-wide Git ownership trust
-    git clone https://github.com/flutter/flutter.git -b stable --depth 1 "${FLUTTER_ROOT}"
+    local flutter_repo="https://github.com/flutter/flutter.git"
+    echo "Cloning Flutter SDK from ${flutter_repo}"
+    git clone "${flutter_repo}" -b stable --depth 1 "${FLUTTER_ROOT}"
     git config --system --add safe.directory "${FLUTTER_ROOT}"
     chmod -R a+rX "${FLUTTER_ROOT}"
 
-    # Pre-download Linux desktop and Android artifacts while running as root
     CI=true "${FLUTTER_ROOT}/bin/flutter" --disable-analytics
     CI=true "${FLUTTER_ROOT}/bin/flutter" precache --linux --android
 
-    # Install standalone Kotlin compiler into /opt/kotlinc
-    KOTLIN_VERSION="2.1.20"
-    curl -fsSL "https://github.com/JetBrains/kotlin/releases/download/v${KOTLIN_VERSION}/kotlin-compiler-${KOTLIN_VERSION}.zip" -o /tmp/kotlin.zip
+    local kotlin_version="2.1.20"
+    local kotlin_url="https://github.com/JetBrains/kotlin/releases/download/v${kotlin_version}/kotlin-compiler-${kotlin_version}.zip"
+    download_file "${kotlin_url}" "/tmp/kotlin.zip"
     unzip -q /tmp/kotlin.zip -d /opt
     rm -f /tmp/kotlin.zip
 }
