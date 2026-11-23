@@ -59,8 +59,26 @@ configure_live_build() {
         --updates true
 }
 
+ensure_debian_live_build() {
+    if lb --version 2>&1 | grep -q "^3\.0~a57"; then
+        echo "Replacing Ubuntu live-build 3.0~a57 with Debian Trixie live-build..."
+        local deb_path
+        deb_path=$(curl -fsSL "http://deb.debian.org/debian/dists/trixie/main/binary-amd64/Packages.gz" \
+            | gzip -dc \
+            | awk '/^Package: live-build$/{found=1} found && /^Filename:/{print $2; exit}')
+        if [[ -z "${deb_path}" ]]; then
+            echo "Error: Could not resolve live-build from Debian Trixie." >&2
+            exit 1
+        fi
+        curl -fsSL "http://deb.debian.org/debian/${deb_path}" -o /tmp/live-build.deb
+        dpkg -i /tmp/live-build.deb
+        rm -f /tmp/live-build.deb
+    fi
+}
+
 main() {
     require_root
+    ensure_debian_live_build
     fetch_apt_keys
     configure_live_build
     lb build
