@@ -76,20 +76,22 @@ jobs:
 
       - name: Install live-build and QEMU dependencies
         run: |
-          live-build \
-          debootstrap \
-          squashfs-tools \
-          xorriso \
-          isolinux \
-          syslinux-common \
-          grub-pc-bin \
-          grub-efi-amd64-bin \
-          mtools \
-          dosfstools \
-          qemu-system-x86 \
-          qemu-utils \
-          ovmf \
-          python3
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            live-build \
+            debootstrap \
+            squashfs-tools \
+            xorriso \
+            isolinux \
+            syslinux-common \
+            grub-pc-bin \
+            grub-efi-amd64-bin \
+            mtools \
+            dosfstools \
+            qemu-system-x86 \
+            qemu-utils \
+            ovmf \
+            python3
 
       - name: Make scripts executable
         run: |

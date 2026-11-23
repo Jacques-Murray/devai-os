@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import io
 import os
 import threading
@@ -42,9 +43,7 @@ def sample_config(tmp_path: Path) -> BootTestConfig:
 
 
 @pytest.fixture
-def mock_serial_pipe() -> (
-    Generator[tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int]]
-):
+def mock_serial_pipe() -> Generator[tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int]]:
     """Provide a SerialConsoleSession wired to an in-memory stdin and real OS stdout pipe."""
     read_fd, write_fd = os.pipe()
     stdin_buffer = io.BytesIO()
@@ -62,10 +61,8 @@ def mock_serial_pipe() -> (
         yield session, transcript, stdin_buffer, write_fd
     finally:
         stdout_stream.close()
-        try:
+        with contextlib.suppress(OSError):
             os.close(write_fd)
-        except OSError:
-            pass
 
 
 class TestQemuCommandBuilder:
@@ -90,11 +87,9 @@ class TestQemuCommandBuilder:
         assert "-enable-kvm" in cmd
         assert "host" in cmd
         assert "qemu64" not in cmd
-        assert f"file={sample_config.iso_path}" in " ".join(cmd)
-        assert (
-            f"if=pflash,format=raw,readonly=on,file={sample_config.ovmf_code_path}"
-            in cmd
-        )
+        assert str(sample_config.iso_path) in cmd
+        assert f"file={scratch_disk},format=qcow2,if=virtio" in cmd
+        assert f"if=pflash,format=raw,readonly=on,file={sample_config.ovmf_code_path}" in cmd
 
     def test_build_falls_back_to_qemu64_without_kvm_or_ovmf(
         self,
@@ -124,9 +119,7 @@ class TestSerialConsoleSession:
 
     def test_send_line_writes_carriage_return_terminated_bytes(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify send_line encodes commands with carriage return and flushes."""
         session, _, stdin_buffer, _ = mock_serial_pipe
@@ -138,9 +131,7 @@ class TestSerialConsoleSession:
 
     def test_wait_for_all_succeeds_across_chunked_serial_writes(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify wait_for_all accumulates chunks until every marker appears."""
         session, transcript, _, write_fd = mock_serial_pipe
@@ -169,9 +160,7 @@ class TestSerialConsoleSession:
 
     def test_wait_for_any_and_clear_tail_reset_matching_window(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify clear_tail prevents stale markers from matching subsequent waits."""
         session, _, _, write_fd = mock_serial_pipe
@@ -187,9 +176,7 @@ class TestSerialConsoleSession:
 
     def test_wait_for_all_returns_false_on_timeout(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify wait_for_all returns False when expected markers never arrive."""
         session, _, _, write_fd = mock_serial_pipe
@@ -205,9 +192,7 @@ class TestGuestToolchainVerifierAuth:
 
     def test_authenticate_succeeds_with_username_and_password(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify standard username -> Password: -> shell prompt authentication."""
         session, _, stdin_buffer, write_fd = mock_serial_pipe
@@ -231,15 +216,11 @@ class TestGuestToolchainVerifierAuth:
 
     def test_authenticate_succeeds_when_shell_opens_without_password(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify immediate shell prompt after username succeeds without sending password."""
         session, _, stdin_buffer, write_fd = mock_serial_pipe
-        spec = SmokeTestSpec(
-            username="root", password="ignored", login_timeout_seconds=3
-        )
+        spec = SmokeTestSpec(username="root", password="ignored", login_timeout_seconds=3)
         verifier = GuestToolchainVerifier(session, spec)
 
         os.write(write_fd, b"root@devai-os:~# ")
@@ -250,9 +231,7 @@ class TestGuestToolchainVerifierAuth:
 
     def test_authenticate_fails_on_login_incorrect(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify Login incorrect response fails authentication immediately."""
         session, _, _, write_fd = mock_serial_pipe
@@ -275,9 +254,7 @@ class TestGuestToolchainVerifierAuth:
 
     def test_authenticate_fails_when_password_prompt_times_out(
         self,
-        mock_serial_pipe: tuple[
-            SerialConsoleSession, SerialTranscript, io.BytesIO, int
-        ],
+        mock_serial_pipe: tuple[SerialConsoleSession, SerialTranscript, io.BytesIO, int],
     ) -> None:
         """Verify silent console after sending username returns False on timeout."""
         session, _, _, _ = mock_serial_pipe
