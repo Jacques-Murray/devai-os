@@ -32,7 +32,7 @@ known-first-party = ["package_release", "test_iso_boot"]
 
 [tool.ruff.format]
 quote-style = "double"
-ident-style = "space"
+indent-style = "space"
 
 [tool.mypy]
 python_version = "3.13"
