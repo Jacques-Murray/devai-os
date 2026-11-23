@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Lint shell scripts and chroot hooks
         run: |
@@ -33,7 +33,7 @@ jobs:
           shellcheck -x build.sh config/hooks/normal/*.hook.chroot
 
       - name: Set up uv and Python 3.13
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
           enable-cache: true
@@ -63,7 +63,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Reclaim runner disk space for ISO build
         run: |
@@ -131,7 +131,7 @@ jobs:
 
       - name: Upload QEMU boot log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: qemu-boot-log-${{ github.sha }}
           path: artifacts/qemu-boot.log
@@ -139,7 +139,7 @@ jobs:
 
       - name: Uplaod DevAI-OS ISO image
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: devai-os-iso-${{ github.sha }}
           path: ${{ steps.stage_iso.outputs.iso_path }}
@@ -156,14 +156,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Reclaim runner disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
 
       - name: Download verified ISO artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: devai-os-iso-${{ github.sha }}
           path: staging

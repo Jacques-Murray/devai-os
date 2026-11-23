@@ -24,7 +24,7 @@ install_nodejs_and_devcontainers() {
     mkdir -p "${FNM_DIR}"
     curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir "${FNM_DIR}" --skip-shell
     export PATH="${FNM_DIR}:${PATH}"
-    eval "${fnm env}"
+    eval "$("${FNM_DIR}/fnm" env)"
     fnm install --lts
     fnm default lts-latest
     npm install -g @devcontainers/cli
