@@ -5,9 +5,15 @@ export FNM_DIR="/opt/fnm"
 export PATH="${FNM_DIR}:${PATH}"
 eval "$("${FNM_DIR}/fnm" env)"
 
-verify_antigravity_cli() {
+# The antigravity APT package ships only the IDE; agy comes from its own installer.
+install_antigravity_cli() {
+    local url="https://antigravity.google/cli/install.sh"
+    echo "Running installer from ${url}"
+    curl -fSL "${url}" | bash -s -- --dir /usr/local/bin
+    rm -rf /root/.cache/antigravity
+
     if ! command -v agy >/dev/null 2>&1; then
-        echo "Error: agy CLI was not installed by the antigravity package." >&2
+        echo "Error: agy CLI was not installed to /usr/local/bin." >&2
         exit 1
     fi
 }
@@ -17,5 +23,5 @@ install_node_ai_clis() {
     npm install -g @anthropic-ai/claude-code @openai/codex
 }
 
-verify_antigravity_cli
+install_antigravity_cli
 install_node_ai_clis

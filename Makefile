@@ -19,6 +19,7 @@ EXTERNAL_URLS := \
 	https://packages.microsoft.com/debian/13/prod/dists/trixie/Release \
 	https://packages.microsoft.com/repos/code/dists/stable/Release \
 	https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/dists/antigravity-debian/Release \
+	https://antigravity.google/cli/install.sh \
 	https://astral.sh/uv/install.sh \
 	https://sh.rustup.rs \
 	https://fnm.vercel.app/install \

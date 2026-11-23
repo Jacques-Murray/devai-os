@@ -30,7 +30,7 @@ DevAI-OS is a custom Debian 13 (Trixie) Linux distribution configured for polygl
 
 - **Claude Code:** `@anthropic-ai/claude-code` installed globally via npm
 - **OpenAI Codex CLI:** `@openai/codex` installed globally via npm
-- **Antigravity CLI (`agy`):** Provided system-wide in `/usr/bin/agy` by the `antigravity` APT package
+- **Antigravity CLI (`agy`):** Installed system-wide in `/usr/local/bin/agy` via the official installer (`https://antigravity.google/cli/install.sh`)
 
 ### Containers and Virtualization
 
