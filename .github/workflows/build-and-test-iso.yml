@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   unit-tests:
     name: Pre-Flight Linting, Type Checks, and Unit Tests
@@ -82,6 +85,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            debian-archive-keyring \
             debootstrap \
             squashfs-tools \
             xorriso \
