@@ -28,6 +28,8 @@ DEFAULT_REQUIRED_BINARIES: tuple[str, ...] = (
     "agy",
 )
 
+KVM_DEVICE_PATH: Path = Path("/dev/kvm")
+
 
 @dataclass(frozen=True)
 class BinaryCheckResult:
@@ -125,7 +127,7 @@ class QemuCommandBuilder:
             "-no-reboot",
         ]
 
-        if os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.R_OK | os.W_OK):
+        if KVM_DEVICE_PATH.exists() and os.access(KVM_DEVICE_PATH, os.R_OK | os.W_OK):
             cmd.extend(["-enable-kvm", "-cpu", "host"])
         else:
             cmd.extend(["-cpu", "qemu64"])
@@ -150,9 +152,7 @@ class SerialConsoleSession:
         transcript: SerialTranscript,
     ) -> None:
         if process.stdin is None or process.stdout is None:
-            raise RuntimeError(
-                "QEMU process must be started with stdin and stdout pipes."
-            )
+            raise RuntimeError("QEMU process must be started with stdin and stdout pipes.")
         self._process = process
         self._stdin = process.stdin
         self._stdout_fd = process.stdout.fileno()
@@ -160,7 +160,7 @@ class SerialConsoleSession:
 
     def send_line(self, text: str) -> None:
         """Write a command or credential terminated by carriage return to serial stdin."""
-        payload = f"{text}\r".encode("utf-8")
+        payload = f"{text}\r".encode()
         self._stdin.write(payload)
         self._stdin.flush()
 
@@ -176,17 +176,14 @@ class SerialConsoleSession:
             if len(seen) == len(markers):
                 return True
 
-            if not self._read_available_chunk(deadline):
-                if self._process.poll() is not None:
-                    break
+            if not self._read_available_chunk(deadline) and self._process.poll() is not None:
+                break
 
         missing = sorted(set(markers) - seen)
         print(f"Timed out waiting for serial markers: {missing}", file=sys.stderr)
         return False
 
-    def wait_for_any(
-        self, candidates: tuple[str, ...], timeout_seconds: int
-    ) -> str | None:
+    def wait_for_any(self, candidates: tuple[str, ...], timeout_seconds: int) -> str | None:
         """Read serial output until any candidate substring appears."""
         deadline = time.monotonic() + timeout_seconds
 
@@ -195,9 +192,8 @@ class SerialConsoleSession:
                 if candidate in self._transcript.tail_buffer:
                     return candidate
 
-            if not self._read_available_chunk(deadline):
-                if self._process.poll() is not None:
-                    break
+            if not self._read_available_chunk(deadline) and self._process.poll() is not None:
+                break
 
         return None
 
@@ -363,7 +359,7 @@ class GuestSmokeResultParser:
             failure_reason=f"--version failed ({detail})",
         )
 
-    def _parse_runtime_line(line: str) -> RuntimeCheckResult | None:
+    def _parse_runtime_line(self, line: str) -> RuntimeCheckResult | None:
         """Parse a single DEVAI_RUNTIME:<name>:<status>:<detail> line."""
         parts = line.split(":", maxsplit=3)
         if len(parts) < 4:
@@ -536,9 +532,7 @@ def parse_args() -> BootTestConfig:
     parser = argparse.ArgumentParser(
         description="Verify DevAI-OS ISO boot, CLI versions, Flutter doctor, and Docker/KVM access in QEMU.",
     )
-    parser.add_argument(
-        "--iso", required=True, type=Path, help="Path to built .iso image"
-    )
+    parser.add_argument("--iso", required=True, type=Path, help="Path to built .iso image")
     parser.add_argument(
         "--log",
         default=Path("artifacts/qemu-boot.log"),

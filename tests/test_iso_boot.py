@@ -6,7 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from test_iso_boot import (
+
+from verify_iso_boot import (
     BootTestConfig,
     GuestProbeScriptBuilder,
     GuestSmokeResultParser,
@@ -45,8 +46,8 @@ class TestQemuCommandBuilder:
         builder = QemuCommandBuilder(sample_config, scratch_disk)
 
         with (
-            patch("test_iso_boot.os.path.exists", return_value=True),
-            patch("test_iso_boot.os.access", return_value=True),
+            patch.object(Path, "exists", return_value=True),
+            patch("verifyfy_iso_boot.os.access", return_value=True),
         ):
             cmd = builder.build()
 
@@ -55,10 +56,7 @@ class TestQemuCommandBuilder:
         assert "host" in cmd
         assert "qemu64" not in cmd
         assert f"file={sample_config.iso_path}" in " ".join(cmd)
-        assert (
-            f"if=pflash,format=raw,readonly=on,file={sample_config.ovmf_code_path}"
-            in cmd
-        )
+        assert f"if=pflash,format=raw,readonly=on,file={sample_config.ovmf_code_path}" in cmd
 
     def test_build_falls_back_to_qemu64_without_kvm_or_ovmf(
         self,
@@ -73,8 +71,8 @@ class TestQemuCommandBuilder:
         builder = QemuCommandBuilder(config, tmp_path / "scratch.qcow2")
 
         with (
-            patch("test_iso_boot.os.path.exists", return_value=False),
-            patch("test_iso_boot.os.access", return_value=False),
+            patch.object(Path, "exists", return_value=False),
+            patch("verify_iso_boot.os.access", return_value=False),
         ):
             cmd = builder.build()
 

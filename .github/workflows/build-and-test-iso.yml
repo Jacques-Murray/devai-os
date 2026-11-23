@@ -94,7 +94,7 @@ jobs:
       - name: Make scripts executable
         run: |
           chmod +x build.sh
-          chmod +x scripts/test_iso_boot.py
+          chmod +x scripts/verify_iso_boot.py
           chmod +x config/hooks/normal/*.hook.chroot
 
       - name: Build live-build ISO image
@@ -123,7 +123,7 @@ jobs:
           if [ ! -e /dev/kvm ]; then
             KVM_FLAG="--allow-missing-kvm"
           fi
-          python3 scripts/test_iso_boot.py \
+          python3 scripts/verify_iso_boot.py \
             --iso "${{ steps.stage_iso.outputs.iso_path }}" \
             --log "artifacts/qemu-boot.log" \
             --timeout 300 \

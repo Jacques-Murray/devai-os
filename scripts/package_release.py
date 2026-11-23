@@ -8,6 +8,7 @@ import hashlib
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 DEFAULT_CHUNK_SIZE_BYTES: int = 1900 * 1024 * 1024
 READ_BUFFER_SIZE_BYTES: int = 8 * 1024 * 1024
@@ -88,18 +89,15 @@ class IsoFileSplitter:
 
         return tuple(part_paths)
 
-    def _write_single_chunk(self, source: object, destination: Path) -> int:
+    def _write_single_chunk(self, source: BinaryIO, destination: Path) -> int:
         """Copy up to chunk_size_bytes from an open binary stream into destination."""
-        if not hasattr(source, "read"):
-            raise TypeError("source must expose a binary read method.")
-
         remaining = self._chunk_size_bytes
         total_written = 0
 
         with destination.open("wb") as target:
             while remaining > 0:
                 read_limit = min(self._buffer_size, remaining)
-                data: bytes = source.read(read_limit)
+                data = source.read(read_limit)
                 if not data:
                     break
                 target.write(data)
@@ -210,9 +208,7 @@ def parse_args() -> ReleasePackageConfig:
     parser = argparse.ArgumentParser(
         description="Split a verified DevAI-OS ISO and generate SHA256 checksums and release notes.",
     )
-    parser.add_argument(
-        "--iso", required=True, type=Path, help="Path to verified .iso file"
-    )
+    parser.add_argument("--iso", required=True, type=Path, help="Path to verified .iso file")
     parser.add_argument(
         "--output-dir",
         default=Path("release-assets"),

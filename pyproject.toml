@@ -28,7 +28,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["package_release", "test_iso_boot"]
+known-first-party = ["package_release", "verify_iso_boot"]
 
 [tool.ruff.format]
 quote-style = "double"

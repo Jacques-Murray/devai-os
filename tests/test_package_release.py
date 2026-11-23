@@ -6,6 +6,7 @@ import hashlib
 from pathlib import Path
 
 import pytest
+
 from package_release import (
     IsoFileSplitter,
     ReleaseNotesFormatter,

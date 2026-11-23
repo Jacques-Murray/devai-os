@@ -28,7 +28,7 @@ test: ## Run pytest unit test suite
 check: lint test ## Run all linters, type checks, and unit tests
 
 build-iso: ## Build the Debian live-build ISO and stage it in artifacts/
-	chmod +x build.sh scripts/test_iso_boot.py scripts/package_release.py config/hooks/normal/*.hook.chroot
+	chmod +x build.sh scripts/verify_iso_boot.py scripts/package_release.py config/hooks/normal/*.hook.chroot
 	sudo ./build.sh
 	mkdir -p "$(ARTIFACTS_DIR)"
 	@BUILT_ISO=$$(find . -maxdepth 1 \( -name "*.hybrid.iso" -o -name "*.iso" \) | head -n 1); \
@@ -49,7 +49,7 @@ test-iso: ## Boot the staged ISO in headless QEMU and verify tools
 	if [ ! -e /dev/kvm ]; then \
 		KVM_FLAG="--allow-missing-kvm"; \
 	fi; \
-	python3 scripts/test_iso_boot.py \
+	python3 scripts/verify_iso_boot.py \
 		--iso "$(ISO_PATH)" \
 		--log "$(LOG_PATH)" \
 		--timeout "$(TIMEOUT)" \
