@@ -12,7 +12,7 @@ DevAI-OS is a custom Debian 13 (Trixie) Linux distribution configured for polygl
 - **Node.js:** Fast Node Manager (`fnm`) in `/opt/fnm` with the latest LTS Node.js release
 - **Flutter:** Stable Flutter SDK in `/opt/flutter` with pre-cached Linux and Android artifacts
 - **Kotlin and Java:** Standalone Kotlin compiler (`2.1.20`) in `/opt/kotlinc` and OpenJDK 21
-- **Android SDK:** Command-line tools, `platform-tools` (`adb`), Android 35 platform, `build-tools` (`35.0.0`), and pre-accepted licenses in `/opt/android-sdk`
+- **Android SDK:** Command-line tools, `platform-tools` (`adb`), Android 36 platform, `build-tools` (`36.0.0`), and pre-accepted licenses in `/opt/android-sdk`
 
 ### IDEs and Editors
 
