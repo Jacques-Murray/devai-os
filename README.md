@@ -47,6 +47,7 @@ devai-os/
 │       └── build-and-test-iso.yml   # CI/CD build, QEMU boot test, and GitHub Release workflow
 ├── config/
 │   ├── archives/                    # External APT repository definitions (Antigravity, Docker, Microsoft, VS Code)
+│   ├── bootloaders/grub-pc/         # GRUB overrides: 5s autoboot timeout and ttyS0 serial console
 │   ├── hooks/
 │   │   └── normal/                  # Chroot installation and system configuration hooks
 │   ├── includes.chroot/             # Global PATH profile and /etc/skel defaults
