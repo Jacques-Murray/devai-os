@@ -130,7 +130,8 @@ class QemuCommandBuilder:
         if KVM_DEVICE_PATH.exists() and os.access(KVM_DEVICE_PATH, os.R_OK | os.W_OK):
             cmd.extend(["-enable-kvm", "-cpu", "host"])
         else:
-            cmd.extend(["-cpu", "qemu64"])
+            # qemu64 lacks SSE4.2/AVX2, which crashes Bun/Rust CLIs (claude, agy) with SIGILL.
+            cmd.extend(["-cpu", "max"])
 
         if self._config.ovmf_code_path.exists():
             cmd.extend(
@@ -237,14 +238,16 @@ class GuestProbeScriptBuilder:
             'if [ -z "$resolved" ]; then '
             'echo "DEVAI_BIN:${bin}:MISSING::"; '
             "else "
-            "ver_raw=$(\"$bin\" --version 2>/dev/null | head -n 1 | tr -d '\\r' || true); "
+            # Capture the binary's own exit status; a pipeline here would report tr's.
+            'ver_out=$("$bin" --version </dev/null 2>&1); '
             "ver_status=$?; "
-            'if [ -n "$ver_raw" ]; then '
+            "ver_raw=$(printf '%s\\n' \"$ver_out\" | head -n 1 | tr -d '\\r'); "
+            'if [ "$ver_status" -ne 0 ]; then '
+            'echo "DEVAI_BIN:${bin}:VERSION_FAIL:${resolved}:exit_${ver_status} ${ver_raw}"; '
+            'elif [ -n "$ver_raw" ]; then '
             'echo "DEVAI_BIN:${bin}:OK:${resolved}:${ver_raw}"; '
-            'elif [ "$ver_status" -eq 0 ]; then '
-            'echo "DEVAI_BIN:${bin}:OK:${resolved}:(exit 0, no output)"; '
             "else "
-            'echo "DEVAI_BIN:${bin}:VERSION_FAIL:${resolved}:exit_${ver_status}"; '
+            'echo "DEVAI_BIN:${bin}:OK:${resolved}:(exit 0, no output)"; '
             "fi; "
             "fi; "
             "done; "
@@ -254,7 +257,8 @@ class GuestProbeScriptBuilder:
             "if printf '%s\\n' \"$android_line\" | grep -q '\\[✓\\]'; then "
             'echo "DEVAI_RUNTIME:flutter_android:OK:${android_line}"; '
             'elif [ -z "$android_line" ]; then '
-            'echo "DEVAI_RUNTIME:flutter_android:FAIL:Android toolchain section missing from flutter doctor"; '
+            "doctor_head=$(printf '%s\\n' \"$doctor_out\" | head -n 5 | tr '\\n' ' '); "
+            'echo "DEVAI_RUNTIME:flutter_android:FAIL:Android toolchain section missing from flutter doctor: ${doctor_head}"; '
             "else "
             "license_line=$(printf '%s\\n' \"$doctor_out\" | grep -iE 'license|android-sdk' | head -n 1 || true); "
             'echo "DEVAI_RUNTIME:flutter_android:FAIL:${android_line} | ${license_line}"; '

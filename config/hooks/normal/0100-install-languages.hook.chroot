@@ -78,6 +78,13 @@ install_flutter_and_kotlin() {
     CI=true "${FLUTTER_ROOT}/bin/flutter" --disable-analytics
     CI=true "${FLUTTER_ROOT}/bin/flutter" precache --linux --android
 
+    # Flutter writes into its own SDK (bin/cache, .dart_tool) at runtime, so the
+    # live user needs group write access; 0500 adds the user to this group.
+    groupadd --system --force flutter
+    chgrp -R flutter "${FLUTTER_ROOT}"
+    chmod -R g+w "${FLUTTER_ROOT}"
+    find "${FLUTTER_ROOT}" -type d -exec chmod g+s {} +
+
     local kotlin_version="2.1.20"
     local kotlin_url="https://github.com/JetBrains/kotlin/releases/download/v${kotlin_version}/kotlin-compiler-${kotlin_version}.zip"
     download_file "${kotlin_url}" "/tmp/kotlin.zip"

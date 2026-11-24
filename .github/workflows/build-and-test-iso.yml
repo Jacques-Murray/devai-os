@@ -114,6 +114,14 @@ jobs:
           rm -f /tmp/live-build.deb
           lb --version
 
+      - name: Grant runner user access to KVM
+        run: |
+          # Without rw on /dev/kvm the boot test falls back to slow TCG emulation.
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Make scripts executable
         run: |
           chmod +x build.sh

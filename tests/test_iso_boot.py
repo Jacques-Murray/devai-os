@@ -86,12 +86,12 @@ class TestQemuCommandBuilder:
         assert cmd[0] == "qemu-system-x86_64"
         assert "-enable-kvm" in cmd
         assert "host" in cmd
-        assert "qemu64" not in cmd
+        assert "max" not in cmd
         assert str(sample_config.iso_path) in cmd
         assert f"file={scratch_disk},format=qcow2,if=virtio" in cmd
         assert f"if=pflash,format=raw,readonly=on,file={sample_config.ovmf_code_path}" in cmd
 
-    def test_build_falls_back_to_qemu64_without_kvm_or_ovmf(
+    def test_build_falls_back_to_tcg_max_cpu_without_kvm_or_ovmf(
         self,
         tmp_path: Path,
     ) -> None:
@@ -110,7 +110,7 @@ class TestQemuCommandBuilder:
             cmd = builder.build()
 
         assert "-enable-kvm" not in cmd
-        assert "qemu64" in cmd
+        assert cmd[cmd.index("-cpu") + 1] == "max"
         assert not any("if=pflash" in arg for arg in cmd)
 
 
@@ -282,6 +282,8 @@ class TestGuestProbeScriptBuilder:
         assert script.endswith('echo "DEVAI_SMOKE_""DONE"')
         # The console echoes the typed command; the sentinel must only appear in output.
         assert "DEVAI_SMOKE_DONE" not in script
+        # Exit status must come from the binary, not from a trailing pipeline stage.
+        assert 'ver_out=$("$bin" --version </dev/null 2>&1); ver_status=$?;' in script
 
 
 class TestGuestSmokeResultParser:
