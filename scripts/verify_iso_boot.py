@@ -274,7 +274,8 @@ class GuestProbeScriptBuilder:
             "else "
             'echo "DEVAI_RUNTIME:kvm:FAIL:permission denied on /dev/kvm for $(id -un) (groups: $(id -nG))"; '
             "fi; "
-            'echo "DEVAI_SMOKE_DONE"'
+            # Split so the serial echo of this command never contains the sentinel.
+            'echo "DEVAI_SMOKE_""DONE"'
         )
 
 

@@ -279,7 +279,9 @@ class TestGuestProbeScriptBuilder:
         assert "flutter doctor -v" in script
         assert "docker info" in script
         assert "/dev/kvm" in script
-        assert script.endswith('echo "DEVAI_SMOKE_DONE"')
+        assert script.endswith('echo "DEVAI_SMOKE_""DONE"')
+        # The console echoes the typed command; the sentinel must only appear in output.
+        assert "DEVAI_SMOKE_DONE" not in script
 
 
 class TestGuestSmokeResultParser:
